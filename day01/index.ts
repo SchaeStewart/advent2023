@@ -1,46 +1,100 @@
-const readInput = async (path: string): Promise<string[]> => {
-  const decoder = new TextDecoder("utf-8");
-  const bytes = await Deno.readFile(path);
-  const data = decoder.decode(bytes);
-  return data.split("\n");
-};
+import { readInput } from "../readInput.ts";
+
+// const input = `${new URL(".", import.meta.url).pathname}/sampleInput.txt`;
+const input = `${new URL(".", import.meta.url).pathname}/input.txt`;
 
 const part1 = async () => {
-  const calories = await readInput("./input.txt");
-  const result = calories
-    .reduce(
-      ({ results, curr }: { results: number[]; curr: number }, val) =>
-        val === ""
-          ? { results: [...results, curr], curr: 0 }
-          : { results: [...results], curr: curr + parseInt(val) },
-      { results: [], curr: 0 }
-    )
-    .results.sort((a, b) => b - a)
-    .slice(0, 1)[0];
-  console.log("Part 1", result);
+  const data = await readInput(input);
+  let sum = 0;
+
+  for (const line of data) {
+    let first: null | number = null;
+    let last: null | number = null;
+    for (const c of line) {
+      const n = parseInt(c);
+      if (isNaN(n)) continue;
+      if (first === null) {
+        first = n;
+      }
+      last = n;
+    }
+    if (first !== null && last !== null) {
+      sum += first * 10 + last;
+    }
+  }
+
+  console.log("Part 1", { sum });
 };
 
 const part2 = async () => {
-  const calories = await readInput("./input.txt");
-  // const calories = await readInput('./sampleInput.txt')
-  const results = [];
-  let acc = 0;
-  for (const cal of calories) {
-    if (cal === "") {
-      results.push(acc);
-      acc = 0;
-    } else {
-      const num = parseInt(cal);
-      acc += num;
+  const toNumber = (s?: string): number => {
+    if (!s) return -Infinity;
+    const map: Record<string, number> = {
+      one: 1,
+      two: 2,
+      three: 3,
+      four: 4,
+      five: 5,
+      six: 6,
+      seven: 7,
+      eight: 8,
+      nine: 9,
+      "1": 1,
+      "2": 2,
+      "3": 3,
+      "4": 4,
+      "5": 5,
+      "6": 6,
+      "7": 7,
+      "8": 8,
+      "9": 9,
+    };
+    return map[s] || -Infinity;
+  };
+  const data = await readInput(input);
+  let sum = 0;
+
+  const searchSpace: Array<string> = [
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+  ];
+  for (const line of data) {
+    let firstIdx = Infinity;
+    let lastIdx = -Infinity;
+    let first = -Infinity;
+    let last = -Infinity;
+    for (const search of searchSpace) {
+      let idx = line.indexOf(search);
+      if (idx > -1 && idx < firstIdx) {
+        firstIdx = idx;
+        first = toNumber(search);
+      }
+      idx = line.lastIndexOf(search);
+      if (idx > -1 && idx > lastIdx) {
+        lastIdx = idx;
+        last = toNumber(search);
+      }
     }
+    sum += first * 10 + last;
   }
-  console.log(
-    "Part 2",
-    results
-      .sort((a, b) => b - a)
-      .slice(0, 3)
-      .reduce((acc, val) => acc + val, 0)
-  );
+
+  console.log("Part 2", { sum });
 };
 
 await part1();
