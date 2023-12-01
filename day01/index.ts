@@ -27,69 +27,76 @@ const part1 = async () => {
 };
 
 const part2 = async () => {
-  const toNumber = (s?: string): number => {
-    if (!s) return -Infinity;
-    const map: Record<string, number> = {
-      one: 1,
-      two: 2,
-      three: 3,
-      four: 4,
-      five: 5,
-      six: 6,
-      seven: 7,
-      eight: 8,
-      nine: 9,
-      "1": 1,
-      "2": 2,
-      "3": 3,
-      "4": 4,
-      "5": 5,
-      "6": 6,
-      "7": 7,
-      "8": 8,
-      "9": 9,
-    };
-    return map[s] || -Infinity;
-  };
   const data = await readInput(input);
   let sum = 0;
+  const strToNumber: Record<string, number> = {
+    one: 1,
+    two: 2,
+    three: 3,
+    four: 4,
+    five: 5,
+    six: 6,
+    seven: 7,
+    eight: 8,
+    nine: 9,
+    "1": 1,
+    "2": 2,
+    "3": 3,
+    "4": 4,
+    "5": 5,
+    "6": 6,
+    "7": 7,
+    "8": 8,
+    "9": 9,
+  };
 
-  const searchSpace: Array<string> = [
-    "one",
-    "two",
-    "three",
-    "four",
-    "five",
-    "six",
-    "seven",
-    "eight",
-    "nine",
-    "1",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-  ];
+  const finder =
+    (
+      indexOfFn: "indexOf" | "lastIndexOf",
+      shouldUpdate: (prevIdx: number, currIdx: number) => boolean
+    ) =>
+    ({
+      line,
+      search,
+      currIdx,
+      currVal,
+    }: {
+      line: string;
+      search: string;
+      currIdx: number;
+      currVal: number;
+    }) => {
+      let idx = line[indexOfFn](search);
+      if (idx > -1 && shouldUpdate(currIdx, idx)) {
+        return [idx, strToNumber[search]];
+      }
+      return [currIdx, currVal];
+    };
+
+  const findFirst = finder("indexOf", (prevIdx, currIdx) => currIdx < prevIdx);
+  const findLast = finder(
+    "lastIndexOf",
+    (prevIdx, currIdx) => currIdx > prevIdx
+  );
+
   for (const line of data) {
     let firstIdx = Infinity;
     let lastIdx = -Infinity;
     let first = -Infinity;
     let last = -Infinity;
-    for (const search of searchSpace) {
-      let idx = line.indexOf(search);
-      if (idx > -1 && idx < firstIdx) {
-        firstIdx = idx;
-        first = toNumber(search);
-      }
-      idx = line.lastIndexOf(search);
-      if (idx > -1 && idx > lastIdx) {
-        lastIdx = idx;
-        last = toNumber(search);
-      }
+    for (const search of Object.keys(strToNumber)) {
+      [firstIdx, first] = findFirst({
+        line,
+        search,
+        currIdx: firstIdx,
+        currVal: first,
+      });
+      [lastIdx, last] = findLast({
+        line,
+        search,
+        currIdx: lastIdx,
+        currVal: last,
+      });
     }
     sum += first * 10 + last;
   }
