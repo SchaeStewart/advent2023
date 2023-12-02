@@ -8,33 +8,36 @@ type Pull = {
   blue: number;
 };
 type GameRecord = {
-  id: string;
+  id: number;
   pulls: Pull[];
 };
 
 const parseInput = (lines: string[]): GameRecord[] => {
   const records: GameRecord[] = [];
   for (const line of lines) {
-    let [id, rest] = line.split(":");
-    id = id.replace("Game ", "");
-    let pulls: string[][] = rest
-      .split(";")
-      .map((pull) => pull.trim().split(", "));
-    const record: GameRecord = {
-      id,
-      pulls: [],
-    };
-    for (const pull of pulls) {
-      let p: Pull = { red: 0, blue: 0, green: 0 };
-      for (const item of pull) {
-        const [n, color] = item.split(" ");
-        if (["red", "blue", "green"].includes(color)) {
-          p[color as keyof Pull] = parseInt(n);
-        }
-      }
-      record.pulls.push(p);
-    }
-    records.push(record);
+    // Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+    // id = Game 1, rest = 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+    let [id, rest] = line.split(": ");
+    let pulls: Pull[] = rest
+      .split(";") // ["3 blue, 4 red", "1 red, 2 green" "6 blue; 2 green"]
+      .map((pull) => pull.trim().split(", ")) // [ ["3 blue", "4 red"], [ "1 red", "2 green", ], ["6 blue", "2 green"]]
+      .map((pulls) =>
+        pulls.map((pull) => {
+          const [n, color] = pull.split(" ");
+          return [parseInt(n), color as keyof Pull];
+        })
+      ) // [ [ [3, "blue"], [4, "red"] ], [ [1, "red"], [2, "green"] ], [ [6, "blue", [2, "green"] ] ]
+      .map((pull) =>
+        pull.reduce((acc, [n, color]) => ({ ...acc, [color]: n }), {
+          red: 0,
+          blue: 0,
+          green: 0,
+        })
+      ); // Pull {red: n, green: n, blue: n}
+    records.push({
+      id: parseInt(id.replace("Game ", "")),
+      pulls,
+    });
   }
   return records;
 };
@@ -54,7 +57,7 @@ const part1 = async () => {
         pull.blue <= LIMIT.blue
     )
   );
-  const sum = validGames.reduce((acc, val) => acc + parseInt(val.id), 0);
+  const sum = validGames.reduce((acc, val) => acc + val.id, 0);
 
   console.log("Part 1", { sum });
 };
@@ -82,7 +85,5 @@ const part2 = async () => {
   console.log("Part 2", { sum });
 };
 
-await part1();
-await part2();
-// Part 1 { sum: 2416 }
-// Part 2 { sum: 63307 }
+await part1(); // Part 1 { sum: 2416 }
+await part2(); // Part 2 { sum: 63307 }
