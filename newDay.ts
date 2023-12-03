@@ -44,7 +44,7 @@ const day = parseInt(Deno.args[0]);
 if (isNaN(day)) {
   throw new Error("Must provide day as a number as the first argument");
 }
-const dir = `_day${day < 10 ? "0" + day.toString() : day}`; // Pad the day with a zero for 1-9
+const dir = `day${day < 10 ? "0" + day.toString() : day}`; // Pad the day with a zero for 1-9
 await Deno.mkdir(`./${dir}`); // Will error if directory exists.
 
 await Deno.writeTextFile(`./${dir}/sampleInput.txt`, "");
