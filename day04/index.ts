@@ -56,23 +56,17 @@ const calculatePileWorth = (cards: Card[]): number => {
 };
 
 const processPile = (cards: Card[]): number => {
-  // key: card.id, val: number of cards won
-  const cardToNewCards = new Map<number, number>();
-  for (const card of cards) {
-    cardToNewCards.set(
-      card.id,
-      intersection(card.winningNumbers, card.numbersIHave).size
-    );
-  }
-
+  // key: card.id, val number of copies of the given card
   const cardCopies = new Map<number, number>();
   for (const card of cards) {
     cardCopies.set(card.id, 1);
   }
-
   for (const card of cards) {
     const copyCountOfCurrentCard = cardCopies.get(card.id)!;
-    const numberOfNewCards = cardToNewCards.get(card.id)!;
+    const numberOfNewCards = intersection(
+      card.winningNumbers,
+      card.numbersIHave
+    ).size;
     for (let id = card.id + 1; id < card.id + 1 + numberOfNewCards; id++) {
       cardCopies.set(id, cardCopies.get(id)! + copyCountOfCurrentCard);
     }
