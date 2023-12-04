@@ -56,26 +56,30 @@ const calculatePileWorth = (cards: Card[]): number => {
 };
 
 const processPile = (cards: Card[]): number => {
-  let totalCards = 0;
-  const queue: Card[] = [...cards];
-  // k: cardId, v: cards below
-  const cache = new Map<number, number>();
-  while (queue.length) {
-    const card = queue.shift();
-    if (!card) throw new Error("there is not a card.");
-    totalCards++;
-    let id = card.id;
-    let size = -Infinity;
-    const c = cache.get(id);
-    if (c) {
-      size = c;
-    } else {
-      const ins = intersection(card.winningNumbers, card.numbersIHave);
-      if (ins.size === 0) continue;
-      size = ins.size;
-      cache.set(id, size);
+  // key: card.id, val: number of cards won
+  const cardToNewCards = new Map<number, number>();
+  for (const card of cards) {
+    cardToNewCards.set(
+      card.id,
+      intersection(card.winningNumbers, card.numbersIHave).size
+    );
+  }
+
+  const cardCopies = new Map<number, number>();
+  for (const card of cards) {
+    cardCopies.set(card.id, 1);
+  }
+
+  for (const card of cards) {
+    const copyCountOfCurrentCard = cardCopies.get(card.id)!;
+    const numberOfNewCards = cardToNewCards.get(card.id)!;
+    for (let id = card.id + 1; id < card.id + 1 + numberOfNewCards; id++) {
+      cardCopies.set(id, cardCopies.get(id)! + copyCountOfCurrentCard);
     }
-    queue.push(...cards.slice(id, id + size));
+  }
+  let totalCards = 0;
+  for (const [_, val] of cardCopies) {
+    totalCards += val;
   }
   return totalCards;
 };
