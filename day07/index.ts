@@ -19,12 +19,34 @@ type Hand = {
   bid: number;
 };
 
-const getHandType = (cards: string): HandType => {
+const getHandType = (cards: string, withJokers: boolean): HandType => {
+  if (cards === "JJJJJ") return HandType.FiveOfAKind;
   const frequency = new Map();
   for (const c of cards) {
-    const v = frequency.get(c) || 0;
-    frequency.set(c, v + 1);
+    const v = (frequency.get(c) || 0) + 1;
+    frequency.set(c, v);
   }
+
+  let jokerCount = frequency.get("J") || 0;
+  if (withJokers && jokerCount > 0) {
+    frequency.delete("J");
+    while (jokerCount) {
+      let maxV = -Infinity;
+      let maxK = "";
+      for (const [k, v] of frequency) {
+        if (v > maxV && v < 5) {
+          maxV = v;
+          maxK = k;
+        }
+      }
+      while (maxV < 5 && jokerCount > 0) {
+        maxV++;
+        jokerCount--;
+        frequency.set(maxK, maxV);
+      }
+    }
+  }
+
   let foundThree = false;
   let foundTwo = false;
   let twoCount = 0;
@@ -41,7 +63,6 @@ const getHandType = (cards: string): HandType => {
       twoCount++;
     }
   }
-
   if (foundThree && foundTwo) return HandType.FullHouse;
   if (foundThree && !foundTwo) return HandType.ThreeOfAKind;
   if (foundTwo && twoCount === 2) return HandType.TwoPair;
@@ -49,53 +70,13 @@ const getHandType = (cards: string): HandType => {
   return HandType.HighCard;
 };
 
-const getHandTypeWithJokers = (cards: string): HandType => {
-  const frequency = new Map();
-  let jokerCount = 0;
-  for (const c of cards) {
-    if (c === "J") {
-      jokerCount++;
-    } else {
-      const v = frequency.get(c) || 0;
-      frequency.set(c, v + 1);
-    }
-  }
-
-  // account for jokers
-  for (const [k, v] of frequency) {
-    frequency.set(k, Math.min(v + jokerCount, 5));
-  }
-  let foundThree = false;
-  let foundTwo = false;
-  let twoCount = 0;
-  for (const [_, v] of frequency) {
-    if (v === 5) {
-      return HandType.FiveOfAKind;
-    } else if (v === 4) {
-      return HandType.FourOfAKind;
-    } else if (v === 3) {
-      foundThree = true;
-    }
-    if (v === 2) {
-      foundTwo = true;
-      twoCount++;
-    }
-  }
-
-  if (foundThree && foundTwo) return HandType.FullHouse;
-  if (foundThree && !foundTwo) return HandType.ThreeOfAKind;
-  if (foundTwo && twoCount === 2) return HandType.TwoPair;
-  if (foundTwo && twoCount === 1) return HandType.OnePair;
-  return HandType.HighCard;
-};
-
-const parseInput = (data: string[]): Hand[] => {
+const parseInput = (data: string[], withJokers: boolean): Hand[] => {
   const hands: Hand[] = [];
   for (const line of data) {
     const [h, bid] = line.split(" ");
     hands.push({
       cards: h,
-      type: getHandType(h),
+      type: getHandType(h, withJokers),
       bid: parseInt(bid),
     });
   }
@@ -105,9 +86,6 @@ const compare =
   (cardValues: Record<string, number>) =>
   (h1: Hand, h2: Hand): -1 | 0 | 1 => {
     const compareCards = (c1: string, c2: string): -1 | 0 | 1 => {
-      // > 0 	sort a after b, e.g. [b, a]
-      // < 0 	sort a before b, e.g. [a, b]
-
       if (!c1 || !c2) return 0;
       if (c1[0] === c2[0]) return compareCards(c1.slice(1), c2.slice(1));
       if (cardValues[c1[0]] < cardValues[c2[0]]) {
@@ -125,7 +103,8 @@ const compare =
   };
 
 const part1 = async () => {
-  const games = parseInput(await readInput(input));
+  const withJokers = false;
+  const games = parseInput(await readInput(input), false);
   const values: Record<string, number> = {
     A: 0,
     K: 1,
@@ -149,7 +128,7 @@ const part1 = async () => {
 };
 
 const part2 = async () => {
-  const games = parseInput(await readInput(input));
+  const games = parseInput(await readInput(input), true);
   const values: Record<string, number> = {
     A: 0,
     K: 1,
@@ -166,7 +145,6 @@ const part2 = async () => {
     J: 12,
   };
   const winnings = games
-    .map((g) => ({ ...g, type: getHandTypeWithJokers(g.cards) }))
     .sort(compare(values))
     .map((g, i) => g.bid * (i + 1))
     .reduce((acc, val) => acc + val, 0);
@@ -176,3 +154,6 @@ const part2 = async () => {
 
 await part1();
 await part2();
+
+// Part 1 { winnings: 248217452 }
+// Part 2 { winnings: 245576185 }
