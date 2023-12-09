@@ -1,7 +1,7 @@
 import { readInput } from "../readInput.ts";
 
-const input = new URL(".", import.meta.url).pathname + "/sampleInput.txt";
-// const input = new URL(".", import.meta.url).pathname + "/input.txt";
+// const input = new URL(".", import.meta.url).pathname + "/sampleInput.txt";
+const input = new URL(".", import.meta.url).pathname + "/input.txt";
 
 const parseInput = (data: string[]): number[][] => {
   const results: number[][] = [];
@@ -33,8 +33,8 @@ const reduceSequenceBackward = (nums: number[]): number => {
   if (diffs.every((d) => d === 0)) {
     return nums.at(0)! - diffs.at(0)!;
   }
-  const n = reduceSequence(diffs);
-  return n - nums.at(0)!;
+  const n = reduceSequenceBackward(diffs);
+  return nums.at(0)! - n;
 };
 
 const part1 = async () => {
@@ -47,15 +47,12 @@ const part1 = async () => {
 const part2 = async () => {
   const data = parseInput(await readInput(input));
   const diffs = data.map(reduceSequenceBackward);
-  console.log({ diffs });
   const sum = diffs.reduce((acc, val) => acc + val, 0);
 
   console.log("Part 2", { sum });
 };
 
-// 1877825482 - too high
-// 1882162116 - wrong
-// 1877823008 - wrong
-// 1877825184 -
 await part1();
 await part2();
+// 1877825184 -
+// 1108
