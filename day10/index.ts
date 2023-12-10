@@ -1,7 +1,7 @@
 import { readInput } from "../readInput.ts";
 
-const input = new URL(".", import.meta.url).pathname + "/sampleInput.txt";
-// const input = new URL(".", import.meta.url).pathname + "/input.txt";
+// const input = new URL(".", import.meta.url).pathname + "/sampleInput.txt";
+const input = new URL(".", import.meta.url).pathname + "/input.txt";
 
 // | is a vertical pipe connecting north and south.
 // - is a horizontal pipe connecting east and west.
@@ -43,19 +43,6 @@ const cardinalsToPipes = (c1: Cardinal, c2: Cardinal): Pipe => {
 
 const inverseCardinal = (c: Cardinal): Cardinal =>
   c === "N" ? "S" : c === "S" ? "N" : c === "E" ? "W" : "E";
-
-// const cardinalToNumber = (c: Cardinal): number => {
-//   switch (c) {
-//     case "N":
-//     case "E":
-//       return -1;
-//     case "S":
-//     case "W":
-//       return 1;
-//     default:
-//       throw new Error("invalid cardinal " + c);
-//   }
-// };
 
 type Loc = { row: number; col: number };
 
@@ -101,11 +88,58 @@ const findStart = (data: string[][]): Loc => {
   return { row: -1, col: -1 };
 };
 
+const move = (
+  loc: Loc,
+  c: Cardinal,
+  data: string[][],
+): { loc: Loc; pipe: Pipe; nextCardinal: Cardinal } => {
+  const m: Record<Cardinal, Loc> = {
+    N: { row: -1, col: 0 },
+    S: { row: 1, col: 0 },
+    W: { row: 0, col: -1 },
+    E: { row: 0, col: 1 },
+  };
+  const newLoc = { row: loc.row + m[c].row, col: loc.col + m[c].col };
+  const pipe = data[newLoc.row][newLoc.col];
+  if (!isPipe(pipe)) throw new Error("Is not a pipe: " + pipe);
+  let nextCardinal: Cardinal | undefined;
+  // exclude inverse of current cardinal
+  const possibleDirections = pipeToCardinal(pipe);
+  for (const d of possibleDirections) {
+    if (inverseCardinal(d) !== c) {
+      nextCardinal = d;
+    }
+  }
+  if (!nextCardinal) throw new Error("nextDirection is undefined");
+  return ({
+    loc: newLoc,
+    pipe,
+    nextCardinal,
+  });
+};
+
+const walk = (startingLoc: Loc, data: string[][]): number => {
+  const startingDirections = Array.from(pipeToCardinal(
+    identifyStartingPipe(startingLoc, data),
+  ));
+  let p1 = move(startingLoc, startingDirections[0], data);
+  let p2 = move(startingLoc, startingDirections[1], data);
+
+  let count = 1;
+  while (p1.loc.row !== p2.loc.row || p1.loc.col !== p2.loc.col) {
+    count++;
+    p1 = move(p1.loc, p1.nextCardinal, data);
+    p2 = move(p2.loc, p2.nextCardinal, data);
+  }
+  return count;
+};
+
 const part1 = async () => {
   const data = (await readInput(input)).map((line) => line.split(""));
   const startingLoc = findStart(data);
-  const startingSymbol = identifyStartingPipe(startingLoc, data);
-  console.log("Part 1", { startingLoc, startingSymbol });
+  const steps = walk(startingLoc, data);
+
+  console.log("Part 1", { steps });
 };
 
 const part2 = async () => {
