@@ -52,9 +52,10 @@ const puzzleInput = await fetch(
   `https://adventofcode.com/2023/day/${day}/input`,
   {
     headers: new Headers({ Cookie: `session=${sessionToken}` }),
-  }
+  },
 )
   .then((res) => res.text())
   .then((text) => text.trim());
+// const puzzleInput = "";
 await Deno.writeTextFile(`./${dir}/input.txt`, puzzleInput);
 await Deno.writeTextFile(`./${dir}/index.ts`, TEMPLATE);
