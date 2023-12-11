@@ -1,7 +1,7 @@
 import { readInput } from "../readInput.ts";
 
-const input = new URL(".", import.meta.url).pathname + "/sampleInput.txt";
-// const input = new URL(".", import.meta.url).pathname + "/input.txt";
+// const input = new URL(".", import.meta.url).pathname + "/sampleInput.txt";
+const input = new URL(".", import.meta.url).pathname + "/input.txt";
 
 // | is a vertical pipe connecting north and south.
 // - is a horizontal pipe connecting east and west.
@@ -152,7 +152,7 @@ const part1 = async () => {
   console.log("Part 1", { steps });
 };
 
-const getEdges = (locations: Set<string>) => {
+const getInnerEdges = (locations: Set<string>) => {
   const horizontalGreatestMap = new Map<number, number>(); // key: col, val: row
   const horizontalLeastMap = new Map<number, number>();
   const verticalGreatestMap = new Map<number, number>(); // key: col, val: row
@@ -205,76 +205,40 @@ const part2 = async () => {
   const data = (await readInput(input)).map((line) => line.split(""));
   const startingLoc = findStart(data);
   const [_, locations] = walk(startingLoc, data);
-  const { horizontal, vertical, edges } = getEdges(locations);
+  const { horizontal, vertical, edges } = getInnerEdges(locations);
+  // loop through data
+  // capture anything that's not part of locations and is within edges
   const tiles = new Set<string>();
-  for (const [row, [minCol, maxCol]] of horizontal) {
-    for (let col = minCol + 1; col < maxCol; col++) {
-      if (data[row][col] === ".") tiles.add(key({ row, col }));
-    }
-  }
-  for (const [col, [maxRow, minRow]] of vertical) {
-    for (let row = minRow + 1; row < maxRow; row++) {
-      if (data[row][col] === ".") tiles.add(key({ row, col }));
+  for (let row = 0; row < data.length; row++) {
+    for (let col = 0; col < data[row].length; col++) {
+      const cols = horizontal.get(row);
+      const rows = vertical.get(col);
+      if (locations.has(key({ row, col })) || !cols || !rows) continue;
+      const [minCol, maxCol] = cols;
+      const [minRow, maxRow] = rows;
+      if (col < minCol || col >= maxCol) continue;
+      if (row < minRow || row >= maxRow) continue;
+      tiles.add(key({ row, col }));
     }
   }
 
-  const locs: { col: number; row: number }[] = [
-    { row: -1, col: 0 },
-    { row: 1, col: 0 },
-    { row: 0, col: -1 },
-    { row: 0, col: 1 },
-  ];
-  const touches: Set<string> = new Set([...edges]);
-  const validTiles = new Set<string>();
-  for (const t of tiles) {
-    const { row, col } = keyToLoc(t);
-    for (const l of locs) {
-      if (touches.has(key({ row: l.row + row, col: l.col + col }))) {
-        validTiles.add(key({ row, col }));
-      }
-    }
-  }
-  // each tile has to touch an edge or touch a tile that touches an edge
+  console.log({ tiles, size: tiles.size, locations });
 
-  console.log({ validTiles, size: validTiles.size });
-  for (const t of validTiles) {
-    const loc = keyToLoc(t);
-    data[loc.row][loc.col] = "I";
-  }
-  for (const l of edges) {
-    const loc = keyToLoc(l);
-    data[loc.row][loc.col] = "0";
-  }
-  // const tiles = new Set<string>();
-  // for (const l of locations) {
-  //   const loc = keyToLoc(l);
-  //   const locs = [
-  //     { row: -1, col: 0 },
-  //     { row: 1, col: 0 },
-  //     { row: 0, col: 1 },
-  //     { row: 0, col: -1 },
-  //   ].map((l) => ({ col: loc.col + l.col, row: loc.row + l.row }))
-  //     .filter(({ row, col }) =>
-  //       row >= 0 && row < data.length && col >= 0 && col < data[row].length
-  //     );
-  //   for (const item of locs) {
-  //     if (locations.has(key(item))) continue;
-  //     if (data[item.row][item.col] === ".") tiles.add(key(item));
-  //   }
-  // }
-
-  // console.log({ tiles, size: tiles.size });
-  // for (const l of locations) {
-  //   const loc = keyToLoc(l);
-  //   data[loc.row][loc.col] = "0";
-  // }
   // for (const t of tiles) {
   //   const loc = keyToLoc(t);
   //   data[loc.row][loc.col] = "I";
   // }
+  for (const l of locations) {
+    const loc = keyToLoc(l);
+    data[loc.row][loc.col] = " ";
+  }
+  for (const l of edges) {
+    const loc = keyToLoc(l);
+    data[loc.row][loc.col] = "X";
+  }
   await Deno.writeTextFile(
-    // "./tmp.txt",
-    "./sampletmp.txt",
+    "./tmp.txt",
+    // "./sampletmp.txt",
     data.map((line) => line.join("")).join("\n"),
   );
 
