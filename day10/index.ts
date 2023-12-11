@@ -3,15 +3,6 @@ import { readInput } from "../readInput.ts";
 // const input = new URL(".", import.meta.url).pathname + "/sampleInput.txt";
 const input = new URL(".", import.meta.url).pathname + "/input.txt";
 
-// | is a vertical pipe connecting north and south.
-// - is a horizontal pipe connecting east and west.
-// L is a 90-degree bend connecting north and east.
-// J is a 90-degree bend connecting north and west.
-// 7 is a 90-degree bend connecting south and west.
-// F is a 90-degree bend connecting south and east.
-// . is ground; there is no pipe in this tile.
-// S is the starting position of the animal; there is a pipe on this tile, but your sketch doesn't show what shape the pipe has.
-
 type Cardinal = "N" | "S" | "E" | "W";
 type Pipe = "|" | "-" | "L" | "J" | "7" | "F"; //  | "." | "S";
 type PipeToCardinal = Record<Pipe, Set<Cardinal>>;
@@ -23,6 +14,8 @@ const PIPE_TO_CARDINAL: PipeToCardinal = {
   "7": new Set(["S", "W"]),
   "F": new Set(["S", "E"]),
 };
+const inverseCardinal = (c: Cardinal): Cardinal =>
+  c === "N" ? "S" : c === "S" ? "N" : c === "E" ? "W" : "E";
 
 const PIPES: Set<Pipe> = new Set(["|", "-", "L", "J", "7", "F"]);
 const isPipe = (s: unknown): s is Pipe => PIPES.has(s as Pipe);
@@ -37,9 +30,6 @@ const cardinalsToPipes = (c1: Cardinal, c2: Cardinal): Pipe => {
   if (matches.length !== 1) throw new Error("only 1 match expected");
   return matches[0][0] as Pipe;
 };
-
-const inverseCardinal = (c: Cardinal): Cardinal =>
-  c === "N" ? "S" : c === "S" ? "N" : c === "E" ? "W" : "E";
 
 type Loc = { row: number; col: number };
 
@@ -117,7 +107,7 @@ const move = (
 
 const key = (loc: Loc) => `${loc.row}:${loc.col}`;
 
-const walk = (startingLoc: Loc, data: string[][]): [number, Set<string>] => {
+const walk = (startingLoc: Loc, data: string[][]): Set<string> => {
   const startingDirections = Array.from(pipeToCardinal(
     identifyStartingPipe(startingLoc, data),
   ));
@@ -128,15 +118,13 @@ const walk = (startingLoc: Loc, data: string[][]): [number, Set<string>] => {
   let count = 1;
   locations.add(key(p1.loc));
   locations.add(key(p2.loc));
-  while (p1.loc.row !== p2.loc.row || p1.loc.col !== p2.loc.col) {
+  while (key(p1.loc) !== key(p2.loc)) {
     count++;
-    [p1, p2] = [p1, p2].map((p) => move(p.loc, p1.nextCardinal, data))
-      .map((p) => {
-        locations.add(key(p.loc));
-        return p;
-      });
+    [p1, p2] = [p1, p2].map((p) => move(p.loc, p.nextCardinal, data));
+    [p1, p2]
+      .forEach((p) => locations.add(key(p.loc)));
   }
-  return [count, locations];
+  return locations;
 };
 
 const floodFill = (locations: Set<string>, data: string[][]): number => {
@@ -159,8 +147,7 @@ const floodFill = (locations: Set<string>, data: string[][]): number => {
 
 const part1 = async () => {
   const data = (await readInput(input)).map((line) => line.split(""));
-  const startingLoc = findStart(data);
-  const [steps] = walk(startingLoc, data);
+  const steps = Math.ceil(walk(findStart(data), data).size / 2);
 
   console.log("Part 1", { steps });
 };
@@ -168,7 +155,7 @@ const part1 = async () => {
 const part2 = async () => {
   const data = (await readInput(input)).map((line) => line.split(""));
   const startingLoc = findStart(data);
-  const [_, locations] = walk(startingLoc, data);
+  const locations = walk(startingLoc, data);
   const total = floodFill(locations, data);
 
   console.log("Part 2", { total });
@@ -176,3 +163,5 @@ const part2 = async () => {
 
 await part1();
 await part2();
+// Part 1 { steps: 7107 }
+// Part 2 { total: 281 }
