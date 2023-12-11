@@ -25,11 +25,8 @@ const PIPE_TO_CARDINAL: PipeToCardinal = {
 };
 
 const PIPES: Set<Pipe> = new Set(["|", "-", "L", "J", "7", "F"]);
-
 const isPipe = (s: unknown): s is Pipe => PIPES.has(s as Pipe);
-
 const pipeToCardinal = (s: Pipe): Set<Cardinal> => PIPE_TO_CARDINAL[s];
-
 const cardinalsToPipes = (c1: Cardinal, c2: Cardinal): Pipe => {
   if (c1 === c2) {
     throw new Error("Cardinals must be different: " + c1 + " " + c2);
@@ -119,95 +116,30 @@ const move = (
 };
 
 const key = (loc: Loc) => `${loc.row}:${loc.col}`;
-const keyToLoc = (s: string) => {
-  const [row, col] = s.split(":").map((n) => parseInt(n));
-  return { row, col };
-};
+
 const walk = (startingLoc: Loc, data: string[][]): [number, Set<string>] => {
   const startingDirections = Array.from(pipeToCardinal(
     identifyStartingPipe(startingLoc, data),
   ));
+  const locations = new Set<string>();
   let p1 = move(startingLoc, startingDirections[0], data);
   let p2 = move(startingLoc, startingDirections[1], data);
 
   let count = 1;
-  const locations = new Set<string>();
   locations.add(key(p1.loc));
   locations.add(key(p2.loc));
   while (p1.loc.row !== p2.loc.row || p1.loc.col !== p2.loc.col) {
     count++;
-    p1 = move(p1.loc, p1.nextCardinal, data);
-    p2 = move(p2.loc, p2.nextCardinal, data);
-    locations.add(key(p1.loc));
-    locations.add(key(p2.loc));
+    [p1, p2] = [p1, p2].map((p) => move(p.loc, p1.nextCardinal, data))
+      .map((p) => {
+        locations.add(key(p.loc));
+        return p;
+      });
   }
   return [count, locations];
 };
 
-const part1 = async () => {
-  const data = (await readInput(input)).map((line) => line.split(""));
-  const startingLoc = findStart(data);
-  const [steps] = walk(startingLoc, data);
-
-  console.log("Part 1", { steps });
-};
-
-const getInnerEdges = (locations: Set<string>) => {
-  const horizontalGreatestMap = new Map<number, number>(); // key: col, val: row
-  const horizontalLeastMap = new Map<number, number>();
-  const verticalGreatestMap = new Map<number, number>(); // key: col, val: row
-  const verticalLeastMap = new Map<number, number>();
-  for (const loc of locations) {
-    const { row, col } = keyToLoc(loc);
-    // Horizontal
-    const cG = horizontalGreatestMap.get(row) || -Infinity;
-    horizontalGreatestMap.set(row, Math.max(cG, col));
-    const cL = horizontalLeastMap.get(row) || Infinity;
-    horizontalLeastMap.set(row, Math.min(cL, col));
-    // Vertical
-    const rG = verticalGreatestMap.get(col) || -Infinity;
-    verticalGreatestMap.set(col, Math.max(rG, row));
-    const rL = verticalLeastMap.get(col) || Infinity;
-    verticalLeastMap.set(col, Math.min(rL, row));
-  }
-  const horizontal = new Map<number, [number, number]>();
-  const vertical = new Map<number, [number, number]>();
-
-  for (const [row, maxCol] of horizontalGreatestMap) {
-    const leastCol = horizontalLeastMap.get(row)!;
-    horizontal.set(row, [leastCol, maxCol]);
-  }
-  for (const [maxRow, col] of verticalGreatestMap) {
-    const minRow = verticalLeastMap.get(col)!;
-    vertical.set(col, [minRow, maxRow]);
-  }
-  const edges = new Set<string>();
-  for (
-    const [r, c] of [
-      ...horizontalGreatestMap,
-      ...horizontalLeastMap,
-    ]
-  ) {
-    edges.add(key({ row: r, col: c }));
-  }
-  for (
-    const [c, r] of [
-      ...verticalGreatestMap,
-      ...verticalLeastMap,
-    ]
-  ) {
-    edges.add(key({ row: r, col: c }));
-  }
-  return { horizontal, vertical, edges };
-};
-
-const part2 = async () => {
-  const data = (await readInput(input)).map((line) => line.split(""));
-  const startingLoc = findStart(data);
-  const [_, locations] = walk(startingLoc, data);
-  const { horizontal, vertical, edges } = getInnerEdges(locations);
-
-  // Flood fill???
+const floodFill = (locations: Set<string>, data: string[][]): number => {
   let total = 0;
   for (let row = 0; row < data.length; row++) {
     let inside = false;
@@ -222,6 +154,22 @@ const part2 = async () => {
       }
     }
   }
+  return total;
+};
+
+const part1 = async () => {
+  const data = (await readInput(input)).map((line) => line.split(""));
+  const startingLoc = findStart(data);
+  const [steps] = walk(startingLoc, data);
+
+  console.log("Part 1", { steps });
+};
+
+const part2 = async () => {
+  const data = (await readInput(input)).map((line) => line.split(""));
+  const startingLoc = findStart(data);
+  const [_, locations] = walk(startingLoc, data);
+  const total = floodFill(locations, data);
 
   console.log("Part 2", { total });
 };
