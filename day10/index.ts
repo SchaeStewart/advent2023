@@ -206,43 +206,24 @@ const part2 = async () => {
   const startingLoc = findStart(data);
   const [_, locations] = walk(startingLoc, data);
   const { horizontal, vertical, edges } = getInnerEdges(locations);
-  // loop through data
-  // capture anything that's not part of locations and is within edges
-  const tiles = new Set<string>();
+
+  // Flood fill???
+  let total = 0;
   for (let row = 0; row < data.length; row++) {
+    let inside = false;
     for (let col = 0; col < data[row].length; col++) {
-      const cols = horizontal.get(row);
-      const rows = vertical.get(col);
-      if (locations.has(key({ row, col })) || !cols || !rows) continue;
-      const [minCol, maxCol] = cols;
-      const [minRow, maxRow] = rows;
-      if (col < minCol || col >= maxCol) continue;
-      if (row < minRow || row >= maxRow) continue;
-      tiles.add(key({ row, col }));
+      if (!locations.has(key({ row, col })) && inside) {
+        total++;
+      } else if (
+        locations.has(key({ row, col })) &&
+        ["|", "J", "L"].includes(data[row][col])
+      ) {
+        inside = !inside;
+      }
     }
   }
 
-  console.log({ tiles, size: tiles.size, locations });
-
-  // for (const t of tiles) {
-  //   const loc = keyToLoc(t);
-  //   data[loc.row][loc.col] = "I";
-  // }
-  for (const l of locations) {
-    const loc = keyToLoc(l);
-    data[loc.row][loc.col] = " ";
-  }
-  for (const l of edges) {
-    const loc = keyToLoc(l);
-    data[loc.row][loc.col] = "X";
-  }
-  await Deno.writeTextFile(
-    "./tmp.txt",
-    // "./sampletmp.txt",
-    data.map((line) => line.join("")).join("\n"),
-  );
-
-  console.log("Part 2", {});
+  console.log("Part 2", { total });
 };
 
 await part1();
