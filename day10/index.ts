@@ -170,6 +170,17 @@ const getEdges = (locations: Set<string>) => {
     const rL = verticalLeastMap.get(col) || Infinity;
     verticalLeastMap.set(col, Math.min(rL, row));
   }
+  const horizontal = new Map<number, [number, number]>();
+  const vertical = new Map<number, [number, number]>();
+
+  for (const [row, maxCol] of horizontalGreatestMap) {
+    const leastCol = horizontalLeastMap.get(row)!;
+    horizontal.set(row, [leastCol, maxCol]);
+  }
+  for (const [maxRow, col] of verticalGreatestMap) {
+    const minRow = verticalLeastMap.get(col)!;
+    vertical.set(col, [minRow, maxRow]);
+  }
   const edges = new Set<string>();
   for (
     const [r, c] of [
@@ -187,15 +198,49 @@ const getEdges = (locations: Set<string>) => {
   ) {
     edges.add(key({ row: r, col: c }));
   }
-  return edges;
+  return { horizontal, vertical, edges };
 };
 
 const part2 = async () => {
   const data = (await readInput(input)).map((line) => line.split(""));
   const startingLoc = findStart(data);
   const [_, locations] = walk(startingLoc, data);
-  const edges = getEdges(locations);
-  console.log({ edges });
+  const { horizontal, vertical, edges } = getEdges(locations);
+  const tiles = new Set<string>();
+  for (const [row, [minCol, maxCol]] of horizontal) {
+    for (let col = minCol + 1; col < maxCol; col++) {
+      if (data[row][col] === ".") tiles.add(key({ row, col }));
+    }
+  }
+  for (const [col, [maxRow, minRow]] of vertical) {
+    for (let row = minRow + 1; row < maxRow; row++) {
+      if (data[row][col] === ".") tiles.add(key({ row, col }));
+    }
+  }
+
+  const locs: { col: number; row: number }[] = [
+    { row: -1, col: 0 },
+    { row: 1, col: 0 },
+    { row: 0, col: -1 },
+    { row: 0, col: 1 },
+  ];
+  const touches: Set<string> = new Set([...edges]);
+  const validTiles = new Set<string>();
+  for (const t of tiles) {
+    const { row, col } = keyToLoc(t);
+    for (const l of locs) {
+      if (touches.has(key({ row: l.row + row, col: l.col + col }))) {
+        validTiles.add(key({ row, col }));
+      }
+    }
+  }
+  // each tile has to touch an edge or touch a tile that touches an edge
+
+  console.log({ validTiles, size: validTiles.size });
+  for (const t of validTiles) {
+    const loc = keyToLoc(t);
+    data[loc.row][loc.col] = "I";
+  }
   for (const l of edges) {
     const loc = keyToLoc(l);
     data[loc.row][loc.col] = "0";
@@ -228,6 +273,7 @@ const part2 = async () => {
   //   data[loc.row][loc.col] = "I";
   // }
   await Deno.writeTextFile(
+    // "./tmp.txt",
     "./sampletmp.txt",
     data.map((line) => line.join("")).join("\n"),
   );
