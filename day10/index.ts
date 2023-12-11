@@ -1,7 +1,7 @@
 import { readInput } from "../readInput.ts";
 
-// const input = new URL(".", import.meta.url).pathname + "/sampleInput.txt";
-const input = new URL(".", import.meta.url).pathname + "/input.txt";
+const input = new URL(".", import.meta.url).pathname + "/sampleInput.txt";
+// const input = new URL(".", import.meta.url).pathname + "/input.txt";
 
 // | is a vertical pipe connecting north and south.
 // - is a horizontal pipe connecting east and west.
@@ -118,7 +118,12 @@ const move = (
   });
 };
 
-const walk = (startingLoc: Loc, data: string[][]): number => {
+const key = (loc: Loc) => `${loc.row}:${loc.col}`;
+const keyToLoc = (s: string) => {
+  const [row, col] = s.split(":").map((n) => parseInt(n));
+  return { row, col };
+};
+const walk = (startingLoc: Loc, data: string[][]): [number, Set<string>] => {
   const startingDirections = Array.from(pipeToCardinal(
     identifyStartingPipe(startingLoc, data),
   ));
@@ -126,24 +131,106 @@ const walk = (startingLoc: Loc, data: string[][]): number => {
   let p2 = move(startingLoc, startingDirections[1], data);
 
   let count = 1;
+  const locations = new Set<string>();
+  locations.add(key(p1.loc));
+  locations.add(key(p2.loc));
   while (p1.loc.row !== p2.loc.row || p1.loc.col !== p2.loc.col) {
     count++;
     p1 = move(p1.loc, p1.nextCardinal, data);
     p2 = move(p2.loc, p2.nextCardinal, data);
+    locations.add(key(p1.loc));
+    locations.add(key(p2.loc));
   }
-  return count;
+  return [count, locations];
 };
 
 const part1 = async () => {
   const data = (await readInput(input)).map((line) => line.split(""));
   const startingLoc = findStart(data);
-  const steps = walk(startingLoc, data);
+  const [steps] = walk(startingLoc, data);
 
   console.log("Part 1", { steps });
 };
 
+const getEdges = (locations: Set<string>) => {
+  const horizontalGreatestMap = new Map<number, number>(); // key: col, val: row
+  const horizontalLeastMap = new Map<number, number>();
+  const verticalGreatestMap = new Map<number, number>(); // key: col, val: row
+  const verticalLeastMap = new Map<number, number>();
+  for (const loc of locations) {
+    const { row, col } = keyToLoc(loc);
+    // Horizontal
+    const cG = horizontalGreatestMap.get(row) || -Infinity;
+    horizontalGreatestMap.set(row, Math.max(cG, col));
+    const cL = horizontalLeastMap.get(row) || Infinity;
+    horizontalLeastMap.set(row, Math.min(cL, col));
+    // Vertical
+    const rG = verticalGreatestMap.get(col) || -Infinity;
+    verticalGreatestMap.set(col, Math.max(rG, row));
+    const rL = verticalLeastMap.get(col) || Infinity;
+    verticalLeastMap.set(col, Math.min(rL, row));
+  }
+  const edges = new Set<string>();
+  for (
+    const [r, c] of [
+      ...horizontalGreatestMap,
+      ...horizontalLeastMap,
+    ]
+  ) {
+    edges.add(key({ row: r, col: c }));
+  }
+  for (
+    const [c, r] of [
+      ...verticalGreatestMap,
+      ...verticalLeastMap,
+    ]
+  ) {
+    edges.add(key({ row: r, col: c }));
+  }
+  return edges;
+};
+
 const part2 = async () => {
-  const data = await readInput(input);
+  const data = (await readInput(input)).map((line) => line.split(""));
+  const startingLoc = findStart(data);
+  const [_, locations] = walk(startingLoc, data);
+  const edges = getEdges(locations);
+  console.log({ edges });
+  for (const l of edges) {
+    const loc = keyToLoc(l);
+    data[loc.row][loc.col] = "0";
+  }
+  // const tiles = new Set<string>();
+  // for (const l of locations) {
+  //   const loc = keyToLoc(l);
+  //   const locs = [
+  //     { row: -1, col: 0 },
+  //     { row: 1, col: 0 },
+  //     { row: 0, col: 1 },
+  //     { row: 0, col: -1 },
+  //   ].map((l) => ({ col: loc.col + l.col, row: loc.row + l.row }))
+  //     .filter(({ row, col }) =>
+  //       row >= 0 && row < data.length && col >= 0 && col < data[row].length
+  //     );
+  //   for (const item of locs) {
+  //     if (locations.has(key(item))) continue;
+  //     if (data[item.row][item.col] === ".") tiles.add(key(item));
+  //   }
+  // }
+
+  // console.log({ tiles, size: tiles.size });
+  // for (const l of locations) {
+  //   const loc = keyToLoc(l);
+  //   data[loc.row][loc.col] = "0";
+  // }
+  // for (const t of tiles) {
+  //   const loc = keyToLoc(t);
+  //   data[loc.row][loc.col] = "I";
+  // }
+  await Deno.writeTextFile(
+    "./sampletmp.txt",
+    data.map((line) => line.join("")).join("\n"),
+  );
 
   console.log("Part 2", {});
 };
