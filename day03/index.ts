@@ -7,7 +7,7 @@ const isSymbol = (c: string) => c !== "." && isNaN(parseInt(c));
 const isNumber = (c: string) => !isNaN(parseInt(c));
 const getSymbolLocations = (
   data: string[],
-  filter?: string[]
+  filter?: string[],
 ): [row: number, col: number][] => {
   const locs: [row: number, col: number][] = [];
   for (let r = 0; r < data.length; r++) {

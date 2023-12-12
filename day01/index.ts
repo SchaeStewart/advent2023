@@ -50,33 +50,32 @@ const part2 = async () => {
     "9": 9,
   };
 
-  const finder =
-    (
-      indexOfFn: "indexOf" | "lastIndexOf",
-      shouldUpdate: (prevIdx: number, currIdx: number) => boolean
-    ) =>
-    ({
-      line,
-      search,
-      currIdx,
-      currVal,
-    }: {
-      line: string;
-      search: string;
-      currIdx: number;
-      currVal: number;
-    }) => {
-      let idx = line[indexOfFn](search);
-      if (idx > -1 && shouldUpdate(currIdx, idx)) {
-        return [idx, strToNumber[search]];
-      }
-      return [currIdx, currVal];
-    };
+  const finder = (
+    indexOfFn: "indexOf" | "lastIndexOf",
+    shouldUpdate: (prevIdx: number, currIdx: number) => boolean,
+  ) =>
+  ({
+    line,
+    search,
+    currIdx,
+    currVal,
+  }: {
+    line: string;
+    search: string;
+    currIdx: number;
+    currVal: number;
+  }) => {
+    let idx = line[indexOfFn](search);
+    if (idx > -1 && shouldUpdate(currIdx, idx)) {
+      return [idx, strToNumber[search]];
+    }
+    return [currIdx, currVal];
+  };
 
   const findFirst = finder("indexOf", (prevIdx, currIdx) => currIdx < prevIdx);
   const findLast = finder(
     "lastIndexOf",
-    (prevIdx, currIdx) => currIdx > prevIdx
+    (prevIdx, currIdx) => currIdx > prevIdx,
   );
 
   for (const line of data) {

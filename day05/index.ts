@@ -1,22 +1,22 @@
-import { readRawInput } from '../readInput.ts';
+import { readRawInput } from "../readInput.ts";
 
 // const input = new URL('.', import.meta.url).pathname + '/sampleInput.txt';
-const input = new URL('.', import.meta.url).pathname + '/input.txt';
+const input = new URL(".", import.meta.url).pathname + "/input.txt";
 
 type SeedMap = { source: number; dest: number; range: number }[];
 const inputToMaps = (data: string): { seeds: number[]; maps: SeedMap[] } => {
-  const [seedRaw, ...maps] = data.split('\n\n');
+  const [seedRaw, ...maps] = data.split("\n\n");
 
   return {
     seeds: seedRaw
-      .slice('seeds: '.length)
-      .split(' ')
+      .slice("seeds: ".length)
+      .split(" ")
       .map((s) => parseInt(s.trim())),
     maps: maps.map((map) => {
       return map
-        .split(':\n')[1]
-        .split('\n')
-        .map((line) => line.split(' ').map((n) => parseInt(n.trim())))
+        .split(":\n")[1]
+        .split("\n")
+        .map((line) => line.split(" ").map((n) => parseInt(n.trim())))
         .map(([dest, source, range]) => ({ dest, source, range }));
     }),
   };
@@ -43,7 +43,7 @@ const walkMaps = (seed: number, maps: SeedMap[]) => {
 const part1 = async () => {
   const { seeds, maps } = inputToMaps(await readRawInput(input));
   const min = Math.min(...seeds.map((seed) => walkMaps(seed, maps)));
-  console.log('Part 1', { min });
+  console.log("Part 1", { min });
 };
 
 const seedsToRanges = (seeds: number[]): { start: number; range: number }[] => {
@@ -68,7 +68,7 @@ const part2 = async () => {
     }
   }
 
-  console.log('Part 2', { min });
+  console.log("Part 2", { min });
 };
 
 await part1();

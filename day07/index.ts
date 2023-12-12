@@ -83,8 +83,7 @@ const parseInput = (data: string[], withJokers: boolean): Hand[] => {
   return hands;
 };
 const compare =
-  (cardValues: Record<string, number>) =>
-  (h1: Hand, h2: Hand): -1 | 0 | 1 => {
+  (cardValues: Record<string, number>) => (h1: Hand, h2: Hand): -1 | 0 | 1 => {
     const compareCards = (c1: string, c2: string): -1 | 0 | 1 => {
       if (!c1 || !c2) return 0;
       if (c1[0] === c2[0]) return compareCards(c1.slice(1), c2.slice(1));

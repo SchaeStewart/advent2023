@@ -29,7 +29,7 @@ const parseInput = (data: string[]): LeftRightMap => {
 const navigateMap = (
   map: LeftRightMap,
   startingLoc: string = "AAA",
-  terminalCondition = (currLoc: string) => currLoc !== "ZZZ"
+  terminalCondition = (currLoc: string) => currLoc !== "ZZZ",
 ) => {
   let steps = 0;
   let ptr = 0;

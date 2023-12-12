@@ -20,13 +20,13 @@ const parseInput = (data: string[]): Card[] => {
         winningNumbers
           .split(" ")
           .filter((n) => n.trim() !== "")
-          .map((n) => parseInt(n.trim()))
+          .map((n) => parseInt(n.trim())),
       ),
       numbersIHave: new Set(
         numbersIHave
           .split(" ")
           .filter((n) => n.trim() !== "")
-          .map((n) => parseInt(n.trim()))
+          .map((n) => parseInt(n.trim())),
       ),
     });
   }
@@ -65,7 +65,7 @@ const processPile = (cards: Card[]): number => {
     const copyCountOfCurrentCard = cardCopies.get(card.id)!;
     const numberOfNewCards = intersection(
       card.winningNumbers,
-      card.numbersIHave
+      card.numbersIHave,
     ).size;
     for (let id = card.id + 1; id < card.id + 1 + numberOfNewCards; id++) {
       cardCopies.set(id, cardCopies.get(id)! + copyCountOfCurrentCard);

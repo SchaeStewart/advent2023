@@ -1,18 +1,18 @@
-import { readInput } from '../readInput.ts';
+import { readInput } from "../readInput.ts";
 
 // const input = new URL('.', import.meta.url).pathname + '/sampleInput.txt';
-const input = new URL('.', import.meta.url).pathname + '/input.txt';
+const input = new URL(".", import.meta.url).pathname + "/input.txt";
 
 const parseInput = (data: string[]): { time: number; distance: number }[] => {
   const parseLine = (skipLen: number, line: string) =>
     line
       .slice(skipLen)
       .trim()
-      .split(' ')
-      .filter((el) => el.trim() !== '')
+      .split(" ")
+      .filter((el) => el.trim() !== "")
       .map((n) => parseInt(n.trim()));
-  const times = parseLine('Time:'.length, data[0]);
-  const distance = parseLine('Distance:'.length, data[1]);
+  const times = parseLine("Time:".length, data[0]);
+  const distance = parseLine("Distance:".length, data[1]);
   const result: { time: number; distance: number }[] = [];
   for (let i = 0; i < times.length; i++) {
     result.push({ time: times[i], distance: distance[i] });
@@ -38,7 +38,7 @@ const part1 = async () => {
   const marginOfErr = races
     .map(({ time, distance }) => countWinningDistances(time, distance))
     .reduce((acc, val) => acc * val, 1);
-  console.log('Part 1', { marginOfErr });
+  console.log("Part 1", { marginOfErr });
 };
 
 const part2 = async () => {
@@ -58,7 +58,7 @@ const part2 = async () => {
     correctedInput.distance,
   );
 
-  console.log('Part 2', { winningDistanceCount });
+  console.log("Part 2", { winningDistanceCount });
 };
 
 await part1();

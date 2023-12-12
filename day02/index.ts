@@ -54,7 +54,7 @@ const part1 = async () => {
       (pull) =>
         pull.red <= LIMIT.red &&
         pull.green <= LIMIT.green &&
-        pull.blue <= LIMIT.blue
+        pull.blue <= LIMIT.blue,
     )
   );
   const sum = validGames.reduce((acc, val) => acc + val.id, 0);
@@ -76,7 +76,7 @@ const part2 = async () => {
           red: -Infinity,
           blue: -Infinity,
           green: -Infinity,
-        }
+        },
       )
     )
     .map(({ red, green, blue }) => red * green * blue)
