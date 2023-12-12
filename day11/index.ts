@@ -1,7 +1,7 @@
 import { readInput } from "../readInput.ts";
 
-const input = new URL(".", import.meta.url).pathname + "/sampleInput.txt";
-// const input = new URL(".", import.meta.url).pathname + "/input.txt";
+// const input = new URL(".", import.meta.url).pathname + "/sampleInput.txt";
+const input = new URL(".", import.meta.url).pathname + "/input.txt";
 
 const toString = (data: string[][]) =>
   data.map((line) => line.join("")).join("\n");
@@ -104,24 +104,27 @@ const getExpandedUniverseRanges = (data: string[]) => {
   return { emptyRows: Array.from(emptyRows), emptyCols: Array.from(emptyCols) };
 };
 
-const adJustForExpansion = (
-  { emptyCols, emptyRows, galaxies }: {
+const isBetween = (target: number, x1: number, x2: number) =>
+  (target > x1 && target < x2) || (target > x2 && target < x1);
+
+const distanceWithExpansion = (
+  { emptyCols, emptyRows, loc1, loc2 }: {
     emptyRows: Array<number>;
     emptyCols: Array<number>;
-    galaxies: Loc[];
+    loc1: Loc;
+    loc2: Loc;
   },
 ) => {
-  const adjustedGalaxies: Loc[] = [];
-  for (const galaxy of galaxies) {
-    const rowMod = emptyRows.filter((row) => row < galaxy.row);
-    const colMod = emptyCols.filter((col) => col < galaxy.col);
-    console.log({ galaxy, rowMod, colMod });
-    adjustedGalaxies.push({
-      row: galaxy.row + (rowMod.length * 1_0),
-      col: galaxy.col + (colMod.length * 1_0),
-    });
-  }
-  return adjustedGalaxies;
+  let colMod =
+    emptyCols.filter((col) => isBetween(col, loc1.col, loc2.col)).length;
+  colMod = colMod * (1_000_000 - 1);
+  let rowMod =
+    emptyRows.filter((row) => isBetween(row, loc1.row, loc2.row)).length;
+  rowMod = rowMod * (1_000_000 - 1);
+
+  const dist = Math.abs(loc1.col - loc2.col) + Math.abs(loc1.row - loc2.row) +
+    rowMod + colMod;
+  return dist;
 };
 
 const part2 = async () => {
@@ -129,12 +132,7 @@ const part2 = async () => {
   const { emptyRows, emptyCols } = getExpandedUniverseRanges(
     await readInput(input),
   );
-  const galaxies = adJustForExpansion({
-    emptyCols,
-    emptyRows,
-    galaxies: findGalaxies(universe),
-  });
-  // console.log({ galaxies });
+  const galaxies = findGalaxies(universe);
   const pairs = new Map<string, [Loc, Loc]>();
   const pairsHas = has(pairs);
   const pairsAdd = add(pairs);
@@ -147,8 +145,8 @@ const part2 = async () => {
     }
   }
   let sum = 0;
-  for (const [_, pair] of pairs) {
-    sum += distance(...pair);
+  for (const [_, [loc1, loc2]] of pairs) {
+    sum += distanceWithExpansion({ loc1, loc2, emptyCols, emptyRows });
   }
 
   console.log("Part 2", { sum });
