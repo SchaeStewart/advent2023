@@ -1,7 +1,7 @@
 import { readInput } from "../readInput.ts";
 
-// const input = new URL(".", import.meta.url).pathname + "/sampleInput.txt";
-const input = new URL(".", import.meta.url).pathname + "/input.txt";
+const input = new URL(".", import.meta.url).pathname + "/sampleInput.txt";
+// const input = new URL(".", import.meta.url).pathname + "/input.txt";
 
 const toString = (data: string[][]) =>
   data.map((line) => line.join("")).join("\n");
@@ -9,13 +9,14 @@ const toString = (data: string[][]) =>
 const repeat = (fn: () => void, count: number) => {
   for (let i = 0; i < count; i++) fn();
 };
-const expandUniverse = (data: string[], size = 1): string[][] => {
+const expandUniverse = (data: string[], size = 0): string[][] => {
   const tempUniverse: string[][] = [];
   for (const line of data) {
     const space = line.split("");
     tempUniverse.push([...space]);
-    if (space.every((s) => s === "."))
+    if (space.every((s) => s === ".")) {
       repeat(() => tempUniverse.push([...space]), size);
+    }
   }
   const universe: string[][] = [];
   const allZerosCols = new Set<number>();
@@ -54,10 +55,8 @@ const findGalaxies = (universe: string[][]): Loc[] => {
 
 const key = (l: Loc) => `${l.col}:${l.row}`;
 const pairKey = (l1: Loc, l2: Loc) => key(l1) + "-" + key(l2);
-const has =
-  (map: Map<string, [Loc, Loc]>) =>
-  (l1: Loc, l2: Loc): boolean =>
-    map.has(pairKey(l1, l2)) || map.has(pairKey(l2, l1));
+const has = (map: Map<string, [Loc, Loc]>) => (l1: Loc, l2: Loc): boolean =>
+  map.has(pairKey(l1, l2)) || map.has(pairKey(l2, l1));
 const add = (map: Map<string, [Loc, Loc]>) => (l1: Loc, l2: Loc) => {
   map.set(pairKey(l1, l2), [l1, l2]);
 };
@@ -66,7 +65,7 @@ const distance = (l1: Loc, l2: Loc): number =>
   Math.abs(l1.col - l2.col) + Math.abs(l1.row - l2.row);
 
 const part1 = async () => {
-  const universe = expandUniverse(await readInput(input));
+  const universe = expandUniverse(await readInput(input), 1);
   const galaxies = findGalaxies(universe);
   const pairs = new Map<string, [Loc, Loc]>();
   const pairsHas = has(pairs);
@@ -86,9 +85,56 @@ const part1 = async () => {
   console.log("Part 1", { sum });
 };
 
+const getExpandedUniverseRanges = (data: string[]) => {
+  const emptyRows = new Set<number>();
+  for (let row = 0; row < data.length; row++) {
+    const space = data[row].split("");
+    if (space.every((s) => s === ".")) emptyRows.add(row);
+  }
+  const emptyCols = new Set<number>();
+  for (let col = 0; col < data[0].length; col++) {
+    let isEmpty = true;
+    for (let row = 0; row < data[0].length; row++) {
+      if (data[row][col] !== ".") {
+        isEmpty = false;
+      }
+    }
+    if (isEmpty) emptyCols.add(col);
+  }
+  return { emptyRows: Array.from(emptyRows), emptyCols: Array.from(emptyCols) };
+};
+
+const adJustForExpansion = (
+  { emptyCols, emptyRows, galaxies }: {
+    emptyRows: Array<number>;
+    emptyCols: Array<number>;
+    galaxies: Loc[];
+  },
+) => {
+  const adjustedGalaxies: Loc[] = [];
+  for (const galaxy of galaxies) {
+    const rowMod = emptyRows.filter((row) => row < galaxy.row);
+    const colMod = emptyCols.filter((col) => col < galaxy.col);
+    console.log({ galaxy, rowMod, colMod });
+    adjustedGalaxies.push({
+      row: galaxy.row + (rowMod.length * 1_0),
+      col: galaxy.col + (colMod.length * 1_0),
+    });
+  }
+  return adjustedGalaxies;
+};
+
 const part2 = async () => {
-  const universe = expandUniverse(await readInput(input), 1_000_000);
-  const galaxies = findGalaxies(universe);
+  const universe = (await readInput(input)).map((line) => line.split(""));
+  const { emptyRows, emptyCols } = getExpandedUniverseRanges(
+    await readInput(input),
+  );
+  const galaxies = adJustForExpansion({
+    emptyCols,
+    emptyRows,
+    galaxies: findGalaxies(universe),
+  });
+  // console.log({ galaxies });
   const pairs = new Map<string, [Loc, Loc]>();
   const pairsHas = has(pairs);
   const pairsAdd = add(pairs);
