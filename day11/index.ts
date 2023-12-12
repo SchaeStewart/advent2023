@@ -3,42 +3,6 @@ import { readInput } from "../readInput.ts";
 // const input = new URL(".", import.meta.url).pathname + "/sampleInput.txt";
 const input = new URL(".", import.meta.url).pathname + "/input.txt";
 
-const toString = (data: string[][]) =>
-  data.map((line) => line.join("")).join("\n");
-
-// const repeat = (fn: () => void, count: number) => {
-//   for (let i = 0; i < count; i++) fn();
-// };
-// const expandUniverse = (data: string[], size = 0): string[][] => {
-//   const tempUniverse: string[][] = [];
-//   for (const line of data) {
-//     const space = line.split("");
-//     tempUniverse.push([...space]);
-//     if (space.every((s) => s === ".")) {
-//       repeat(() => tempUniverse.push([...space]), size);
-//     }
-//   }
-//   const universe: string[][] = [];
-//   const allZerosCols = new Set<number>();
-//   for (let col = 0; col < tempUniverse[0].length; col++) {
-//     let isAllZeros = true;
-//     for (let row = 0; row < tempUniverse.length; row++) {
-//       if (tempUniverse[row][col] !== ".") {
-//         isAllZeros = false;
-//       }
-//     }
-//     if (isAllZeros) allZerosCols.add(col);
-//   }
-//   for (let r = 0; r < tempUniverse.length; r++) {
-//     universe[r] = [];
-//     for (let c = 0; c < tempUniverse[r].length; c++) {
-//       universe[r].push(tempUniverse[r][c]);
-//       if (allZerosCols.has(c)) repeat(() => universe[r].push("."), size);
-//     }
-//   }
-
-//   return universe;
-// };
 type Loc = { row: number; col: number };
 
 const key = (l: Loc) => `${l.col}:${l.row}`;
